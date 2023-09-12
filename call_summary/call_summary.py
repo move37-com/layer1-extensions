@@ -76,8 +76,8 @@ async def handleCallDidEnd(msg):
         "event": "layerScript.run",
         "data": {
             "scriptName": "Call Summary",
-            # "scriptInput": str(msg['callID'])
-            "scriptInput": "1693939913"
+            "scriptInput": str(msg['callID'])
+            # "scriptInput": "1693939913"
         }
     }
     print("Sending summary request")
