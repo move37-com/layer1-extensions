@@ -20,7 +20,6 @@ class MessageCenter:
         msg["responseID"] = responseID
         msg["extensionID"] = self.extension_id
         msg["origin"] = "extension"
-        print("Sending message: ", msg)
 
         resp_future = asyncio.Future()
         self.queue[responseID] = resp_future
@@ -70,30 +69,43 @@ extension_id = str(uuid.uuid4())
 loop = asyncio.get_event_loop()
 message_center = MessageCenter(loop, extension_id)
 
+# 
 async def handleCallDidEnd(msg):
     print('Call ended: ', msg['callID'])
     script_msg = {
         "event": "layerScript.run",
         "data": {
             "scriptName": "Call Summary",
-            "scriptInput": str(msg['callID'])
-            # "scriptInput": "1693939913"
+            # "scriptInput": str(msg['callID'])
+            "scriptInput": "1693939913"
         }
     }
     print("Sending summary request")
     summary_msg = await message_center.send_message(script_msg)
     print("Got summary result")
-    summary = summary_msg['summary']
+    json_obj = json.loads(summary_msg['summary'])
+    participants = ", ".join(json_obj['participants'])
+    summary = json_obj['summary']
+    html = """
+    <html><body>
+    <h1>Call Summary</h1>
+    <h3>Participants</h3>
+    {participants}
+    <h3>Summary</h3>
+    {summary}
+    </body></html>
+    """.format(participants=participants, summary=summary)
     view_msg = {
         "event": "view.renderHTML",
         "data": {
-            "html": summary
+            "html": html
         }
     }
     print("Sending view render request")
     status = await message_center.send_message(view_msg)
     print("Render status: ", status)
 
+# Handler for incoming global events
 async def event_handler(event, msg):
     print("Got global event: ", event)
     match event:
@@ -101,6 +113,6 @@ async def event_handler(event, msg):
             await handleCallDidEnd(msg)
 
 
-# Assign global event handler and start the message center
+# Register event handler and start the message center
 message_center.event_handler = event_handler
 message_center.run()
