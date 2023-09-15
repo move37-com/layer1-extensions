@@ -45,11 +45,21 @@ async def handleCallDidEnd(msg):
     print("Render status: ", status)
 
 # Handler for incoming global events
-async def event_handler(channel, event, msg):
+async def call_handler(channel, event, msg):
     match event:
-        case 'callRecordings.callDidEnd':
+        case 'callDidEnd':
             await handleCallDidEnd(msg)
+        # case 'callDidStart':
+        #     print("Call did start")
+        #     frameMsg = {
+        #         "event": "recorder.getFrame",
+        #         "data": {
+        #             "timestamp": 716429492.5250001
+        #         }
+        #     }
+        #     resp = await message_center.send_message(frameMsg)
+        #     print(resp)
 
 # Register event handler and start the message center
-message_center.subscribe('events', event_handler)
+message_center.subscribe('calls', call_handler)
 message_center.run() # Will run forever
