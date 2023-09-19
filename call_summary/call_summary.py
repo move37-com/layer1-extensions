@@ -8,7 +8,7 @@ extension_id = str(uuid.uuid4())
 loop = asyncio.get_event_loop()
 message_center = layer1.MessageCenter(loop, extension_id)
 
-# 
+# Business logic for generating call summaries
 async def handleCallDidEnd(msg):
     print('Call ended: ', msg['callID'])
     script_msg = {
@@ -44,21 +44,11 @@ async def handleCallDidEnd(msg):
     status = await message_center.send_message(view_msg)
     print("Render status: ", status)
 
-# Handler for incoming global events
+# Handler for incoming events on the 'calls' channel
 async def call_handler(channel, event, msg):
     match event:
         case 'callDidEnd':
             await handleCallDidEnd(msg)
-        # case 'callDidStart':
-        #     print("Call did start")
-        #     frameMsg = {
-        #         "event": "recorder.getFrame",
-        #         "data": {
-        #             "timestamp": 716429492.5250001
-        #         }
-        #     }
-        #     resp = await message_center.send_message(frameMsg)
-        #     print(resp)
 
 # Register event handler and start the message center
 message_center.subscribe('calls', call_handler)
