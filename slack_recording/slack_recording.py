@@ -11,11 +11,48 @@ message_center = layer1.MessageCenter(loop, extension_id)
 
 poll_task = None
 
+async def show_recording_msg(isRecording):
+    text =  "Recording started" if isRecording else "Recording ended"
+    html = """
+    <html><body>
+    <h1>Slack Huddle</h1>
+    <p>{text}</p>
+    </body></html>
+    """.format(text=text)
+    view_msg = {
+        "event": "view.renderHTML",
+        "data": {
+            "html": html
+        }
+    }
+    print("Sending view render request")
+    status = await message_center.send_message(view_msg)
+    print("Render status: ", status)
+
 async def start_recording(pid):
-    print("START RECORDING")
+    print("Starting huddle recording")
+    msg = {
+        'event': 'recorder.startCallRecording',
+        'data': {
+            'pid': pid
+        }
+    }
+    resp = await message_center.send_message(msg)
+    if 'error' in resp:
+        print("Error starting huddle recording: ", resp['error'])
+    else:
+        await show_recording_msg(True)
 
 async def stop_recording(pid):
-    print("STOP RECORDING")
+    print("Stopping huddle recording")
+    msg = {
+        'event': 'recorder.stopCallRecording',
+        'data': {
+            'pid': pid
+        }
+    }
+    await message_center.send_message(msg)
+    await show_recording_msg(False)
 
 # Electron apps need to have AX enabled before any window elements become visible
 async def enable_electron_ax(pid):
@@ -30,7 +67,6 @@ async def enable_electron_ax(pid):
     await message_center.send_message(msg)
 
 async def find_huddle_controls(pid):
-    print("Find controls")
     msg = {
         'event': 'ax.getProcessTree',
         'data': {
@@ -44,11 +80,9 @@ async def find_huddle_controls(pid):
         huddle_controls = window_tree.execute("$..children[@.description is 'Huddle controls']")
         for entry in huddle_controls:
             if 'uuid' in entry:
-                print("Found huddle controls")
                 return entry['uuid']
 
 async def find_gallery(uuid):
-    print("Find gallery")
     msg = {
         'event': 'ax.getNodeTree',
         'data': {
@@ -61,15 +95,14 @@ async def find_gallery(uuid):
     gallery = controls_tree.execute("$..children[@.description is 'Gallery']")
     for entry in gallery:
         if 'uuid' in entry:
-            print("Found gallery")
             return True
-    print("Gallery not found")
     return False
 
 async def poll_slack_ax(pid):
     huddle_controls = None
     on_call = False
 
+    # Must enable AX manually for electron apps
     await enable_electron_ax(pid)
     
     while True:
@@ -94,7 +127,7 @@ async def poll_slack_ax(pid):
             huddle_controls = None
 
         # Wait before polling again
-        await asyncio.sleep(3)
+        await asyncio.sleep(5)
 
 async def check_slack_running():
     def is_slack(app):
@@ -115,12 +148,14 @@ async def sys_handler(channel, event, msg):
         case 'applicationDidLaunch':
             if 'bundleID' in msg and msg['bundleID'] == 'com.tinyspeck.slackmacgap':
                 # Slack launched; poll huddle status
+                print("Slack launched")
                 global poll_task
                 pid = msg['pid']
                 poll_task = loop.create_task(poll_slack_ax(pid))
         case 'applicationDidTerminate':
             if 'bundleID' in msg and msg['bundleID'] == 'com.tinyspeck.slackmacgap':
                 # Slack no longer running; cancel polling
+                print("Slack terminated")
                 poll_task.cancel()
 
 # Check once at startup if Slack is already running
