@@ -47,20 +47,19 @@ class MessageCenter:
                 await asyncio.sleep(1)
 
     def triage_msg(self, channel, msg):
-        match channel:
-            case 'messages':
-                # Only handle incoming messages directed at our extension
-                # Also ignore any messages broadcast by ourself (origin)
-                if msg['origin'] == 'app' and msg['extensionID'] == self.extension_id:
-                    self._handle_response(msg['responseID'], msg['data'])
-            case _:
-                for chan, handler in self.handlers.items():
-                    if fnmatch(channel, chan):
-                        try:
-                            self.loop.create_task(handler(channel, msg['event'], msg['data']))
-                        except Exception as e:
-                            print("Event handler error raised: ", e)
-                        break
+        if channel == 'messages':
+            # Only handle incoming messages directed at our extension
+            # Also ignore any messages broadcast by ourself (origin)
+            if msg['origin'] == 'app' and msg['extensionID'] == self.extension_id:
+                self._handle_response(msg['responseID'], msg['data'])
+        else:
+            for chan, handler in self.handlers.items():
+                if fnmatch(channel, chan):
+                    try:
+                        self.loop.create_task(handler(channel, msg['event'], msg['data']))
+                    except Exception as e:
+                        print("Event handler error raised: ", e)
+                    break
 
     # Handles incoming responses on the 'messages' channel
     def _handle_response(self, responseID, msg):

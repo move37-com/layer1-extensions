@@ -144,19 +144,18 @@ async def check_slack_running():
         poll_task = loop.create_task(poll_slack_ax(slack_proc['pid']))
         
 async def sys_handler(channel, event, msg):
-     match event:
-        case 'applicationDidLaunch':
-            if 'bundleID' in msg and msg['bundleID'] == 'com.tinyspeck.slackmacgap':
-                # Slack launched; poll huddle status
-                print("Slack launched")
-                global poll_task
-                pid = msg['pid']
-                poll_task = loop.create_task(poll_slack_ax(pid))
-        case 'applicationDidTerminate':
-            if 'bundleID' in msg and msg['bundleID'] == 'com.tinyspeck.slackmacgap':
-                # Slack no longer running; cancel polling
-                print("Slack terminated")
-                poll_task.cancel()
+    if event == 'applicationDidLaunch':
+        if 'bundleID' in msg and msg['bundleID'] == 'com.tinyspeck.slackmacgap':
+            # Slack launched; poll huddle status
+            print("Slack launched")
+            global poll_task
+            pid = msg['pid']
+            poll_task = loop.create_task(poll_slack_ax(pid))
+    elif event == 'applicationDidTerminate':
+        if 'bundleID' in msg and msg['bundleID'] == 'com.tinyspeck.slackmacgap':
+            # Slack no longer running; cancel polling
+            print("Slack terminated")
+            poll_task.cancel()
 
 # Check once at startup if Slack is already running
 # loop.create_task(check_slack_running())

@@ -46,9 +46,8 @@ async def handleCallDidEnd(msg):
 
 # Handler for incoming events on the 'calls' channel
 async def call_handler(channel, event, msg):
-    match event:
-        case 'callDidEnd':
-            await handleCallDidEnd(msg)
+    if event == 'callDidEnd':
+        await handleCallDidEnd(msg)
 
 # Register event handler and start the message center
 message_center.subscribe('calls', call_handler)
