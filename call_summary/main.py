@@ -2,6 +2,7 @@ import layer1
 import asyncio
 import json
 import uuid
+import sys
 
 # Create a MessageCenter instance
 extension_id = str(uuid.uuid4())
@@ -10,7 +11,7 @@ message_center = layer1.MessageCenter(loop, extension_id)
 
 # Business logic for generating call summaries
 async def handleCallDidEnd(msg):
-    print('Call ended: ', msg['callID'])
+    layer1.log('Call ended: ', msg['callID'])
     script_msg = {
         "event": "layerScript.run",
         "data": {
@@ -19,9 +20,9 @@ async def handleCallDidEnd(msg):
             # "scriptInput": "1693939913"
         }
     }
-    print("Sending summary request")
+    layer1.log("Sending summary request")
     summary_msg = await message_center.send_message(script_msg)
-    print("Got summary result")
+    layer1.log("Got summary result")
     json_obj = json.loads(summary_msg['summary'])
     participants = ", ".join(json_obj['participants'])
     summary = json_obj['summary']
@@ -40,9 +41,9 @@ async def handleCallDidEnd(msg):
             "html": html
         }
     }
-    print("Sending view render request")
+    layer1.log("Sending view render request")
     status = await message_center.send_message(view_msg)
-    print("Render status: ", status)
+    layer1.log("Render status: ", status)
 
 # Handler for incoming events on the 'calls' channel
 async def call_handler(channel, event, msg):

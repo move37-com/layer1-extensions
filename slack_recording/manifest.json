@@ -1,0 +1,5 @@
+{
+    "name": "Slack Huddle Recording",
+    "description": "Automatically detects Slack Huddles, and records the audio with full transcription.",
+    "version": "1.0.0"
+}

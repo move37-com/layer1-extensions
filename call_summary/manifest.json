@@ -1,0 +1,5 @@
+{
+    "name": "Call Summary Generator",
+    "description": "Uses A.I. to generate summaries for Zoom calls, and displays the summary in a popup window automatically after the call ends.",
+    "version": "1.0.0"
+}

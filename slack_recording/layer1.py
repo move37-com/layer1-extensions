@@ -3,6 +3,7 @@ import asyncio
 import json
 import uuid
 from fnmatch import fnmatch
+import sys
 
 class MessageCenter:
     queue = {}
@@ -15,7 +16,7 @@ class MessageCenter:
         self.pubsub = self.r.pubsub()
 
     def run(self):
-        print("Listening for Layer1 events...")
+        log("Listening for Layer1 events...")
         self.loop.run_until_complete(self.listen_for_messages())
 
     def subscribe(self, channel, handler):
@@ -43,7 +44,7 @@ class MessageCenter:
             except asyncio.CancelledError:
                 raise
             except:
-                print("Layer1 connection closed. Retrying...")
+                log("Layer1 connection closed. Retrying...")
                 await asyncio.sleep(1)
 
     def triage_msg(self, channel, msg):
@@ -58,7 +59,7 @@ class MessageCenter:
                     try:
                         self.loop.create_task(handler(channel, msg['event'], msg['data']))
                     except Exception as e:
-                        print("Event handler error raised: ", e)
+                        log("Event handler error raised: ", e)
                     break
 
     # Handles incoming responses on the 'messages' channel
@@ -67,4 +68,8 @@ class MessageCenter:
             self.queue[responseID].set_result(msg)
             del self.queue[responseID]
         else:
-            print("Warning: no response handler found for responseID: ", responseID)
+            log("Warning: no response handler found for responseID: ", responseID)
+
+# Log to stdout and flush after each line
+def log(*str):
+    print(*str, flush=True)

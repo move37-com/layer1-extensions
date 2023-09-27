@@ -25,12 +25,12 @@ async def show_recording_msg(isRecording):
             "html": html
         }
     }
-    print("Sending view render request")
+    layer1.log("Sending view render request")
     status = await message_center.send_message(view_msg)
-    print("Render status: ", status)
+    layer1.log("Render status: ", status)
 
 async def start_recording(pid):
-    print("Starting huddle recording")
+    layer1.log("Starting huddle recording")
     msg = {
         'event': 'recorder.startCallRecording',
         'data': {
@@ -39,12 +39,12 @@ async def start_recording(pid):
     }
     resp = await message_center.send_message(msg)
     if 'error' in resp:
-        print("Error starting huddle recording: ", resp['error'])
+        layer1.log("Error starting huddle recording: ", resp['error'])
     else:
         await show_recording_msg(True)
 
 async def stop_recording(pid):
-    print("Stopping huddle recording")
+    layer1.log("Stopping huddle recording")
     msg = {
         'event': 'recorder.stopCallRecording',
         'data': {
@@ -113,7 +113,7 @@ async def poll_slack_ax(pid):
             if huddle_controls:
                 # Check for Gallery within huddle controls element
                 is_call = await find_gallery(huddle_controls)
-                print("On call: ", is_call)
+                layer1.log("On call: ", is_call)
                 if is_call and not on_call:
                     # Huddle was just started; start recording now
                     await start_recording(pid)
@@ -147,14 +147,14 @@ async def sys_handler(channel, event, msg):
     if event == 'applicationDidLaunch':
         if 'bundleID' in msg and msg['bundleID'] == 'com.tinyspeck.slackmacgap':
             # Slack launched; poll huddle status
-            print("Slack launched")
+            layer1.log("Slack launched")
             global poll_task
             pid = msg['pid']
             poll_task = loop.create_task(poll_slack_ax(pid))
     elif event == 'applicationDidTerminate':
         if 'bundleID' in msg and msg['bundleID'] == 'com.tinyspeck.slackmacgap':
             # Slack no longer running; cancel polling
-            print("Slack terminated")
+            layer1.log("Slack terminated")
             poll_task.cancel()
 
 # Check once at startup if Slack is already running
