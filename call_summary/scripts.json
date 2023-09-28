@@ -1,0 +1,72 @@
+[
+    {
+        "dateCreated": 715820275.196362,
+        "id": "55B5C6EC-E0C8-468D-81B4-3A63614327D8",
+        "query": "1695832374",
+        "steps": [
+            {
+                "sql": {
+                    "_0": {
+                        "db": "extras",
+                        "sql": "SELECT GROUP_CONCAT(text, '\\n') as text FROM TranscriptionSegment WHERE callID = {QUERY} ORDER BY startTimestamp;",
+                        "super": {
+                            "id": "D3E53EA0-E199-4629-AC53-802316CE5BAA",
+                            "type": "sql"
+                        }
+                    }
+                }
+            },
+            {
+                "sql": {
+                    "_0": {
+                        "db": "extras",
+                        "sql": "SELECT participants FROM Call WHERE id = {QUERY};",
+                        "super": {
+                            "id": "986EC31E-EEF0-413C-98F2-F462DECDC12A",
+                            "type": "sql"
+                        }
+                    }
+                }
+            },
+            {
+                "swift": {
+                    "_0": {
+                        "super": {
+                            "code": "import Foundation\n\nstruct SQLResult: Codable {\n    let text: String?\n}\n\nlet str = OUTPUTS[1]\nlet data = str.data(using: .utf8) ?? Data()\nif let array = try? JSONDecoder().decode([SQLResult].self, from: data),\n    let text = array.first?.text {\n    print(text)\n} else {\n    print(\"(No transcription found)\")\n}",
+                            "super": {
+                                "id": "B61AC214-0369-4F4E-9D7D-F50A2E7617FD",
+                                "type": "swift"
+                            }
+                        }
+                    }
+                }
+            },
+            {
+                "prompt": {
+                    "_0": {
+                        "model": "gpt4_32k",
+                        "super": {
+                            "id": "0CAA53EA-F9D2-4A79-AA32-FFAFE02D1F45",
+                            "type": "prompt"
+                        },
+                        "text": "The following transcription is from a recorded Zoom call. Generate a summary of the call, including a numbered list of any action items that were discussed. If the person reponsible for the action item is mentioned, include that in the list. If the person's name is not mentioned, do not include it.\n\nTranscription:\n{OUTPUT 3}"
+                    }
+                }
+            },
+            {
+                "swift": {
+                    "_0": {
+                        "super": {
+                            "code": "import Foundation\n\nstruct ParticipantsResult: Codable {\n    let participants: String\n}\n\nlet str = OUTPUTS[2]\nlet data = str.data(using: .utf8) ?? Data()\nlet array = (try? JSONDecoder().decode([ParticipantsResult].self, from: data)) ?? []\nlet participantsStr = array.first?.participants ?? \"[]\"\nlet participantsData = participantsStr.data(using: .utf8)!\nlet participantsArray = try JSONDecoder().decode([String].self, from: participantsData)\n\nstruct Output: Codable {\n    let participants: [String]\n    let summary: String\n}\n\nlet output = Output(participants: participantsArray, summary: OUTPUTS[4])\nlet outputData = try JSONEncoder().encode(output)\nlet jsonStr = String(data: outputData, encoding: .utf8)!\nprint(jsonStr)",
+                            "super": {
+                                "id": "87710EDD-D8DC-4112-B8C1-62BC04C65138",
+                                "type": "swift"
+                            }
+                        }
+                    }
+                }
+            }
+        ],
+        "title": "Call Summary"
+    }
+]

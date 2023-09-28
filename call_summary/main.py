@@ -15,7 +15,7 @@ async def handleCallDidEnd(msg):
     script_msg = {
         "event": "layerScript.run",
         "data": {
-            "scriptName": "Call Summary",
+            "scriptID": "55B5C6EC-E0C8-468D-81B4-3A63614327D8",
             "scriptInput": str(msg['callID'])
             # "scriptInput": "1693939913"
         }
